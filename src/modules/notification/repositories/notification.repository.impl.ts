@@ -3,7 +3,7 @@ import { Model } from 'mongoose';
 
 import { CreateType, Populated, QuerriableType } from '@common/crud/entities';
 import { MongooseRepositoryImpl, QueryOptions, SortOptions } from '@common/crud/repos';
-import { SORT } from '@common/enums';
+import { SortOrder } from '@common/enums';
 import { CursorPaginationOption } from '@common/types/data';
 
 import { CustomRequestCtx } from '@shared/modules/request-ctx/types';
@@ -96,7 +96,7 @@ export class NotificationRepositoryImpl
 			toUserId: userId,
 			...(options?.cursor && this.transformFilter({ _id: { $gt: options?.cursor } })),
 		};
-		const sortOptions: SortOptions<Notification> = { updatedAt: SORT.DESC };
+		const sortOptions: SortOptions<Notification> = { updatedAt: SortOrder.DESC };
 		const limitOptions = options?.limit || 10;
 		const foundNotifications = this.find(filterOptions, {
 			customRepoOptions: { sort: sortOptions },

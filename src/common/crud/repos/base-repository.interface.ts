@@ -1,4 +1,4 @@
-import { SORT } from '@common/enums';
+import { SortOrder } from '@common/enums';
 import { LowerBound } from '@common/types/utils';
 
 import {
@@ -9,7 +9,7 @@ import {
 	QuerriableType,
 } from '../entities';
 
-export type SortOptions<T> = Partial<Record<keyof Populated<T>, SORT>>;
+export type SortOptions<T> = Partial<Record<keyof Populated<T>, SortOrder>>;
 
 /** will be appended to each repo methods */
 export type RepoOptions<T> = {

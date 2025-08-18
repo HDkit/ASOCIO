@@ -4,7 +4,7 @@ import { Model } from 'mongoose';
 
 import { Populated, QuerriableType } from '@common/crud/entities';
 import { MongooseRepositoryImpl, SortOptions } from '@common/crud/repos';
-import { SORT } from '@common/enums';
+import { SortOrder } from '@common/enums';
 import { CursorPaginationOption } from '@common/types/data';
 
 import { EventParticipant } from '../entities';
@@ -30,7 +30,7 @@ export class EventParticipantRepositoryImpl
 			...where,
 			...(options?.cursor && this.transformFilter({ _id: { $gt: options?.cursor } })),
 		};
-		const sortOptions: SortOptions<EventParticipant> = { createdAt: SORT.ASC };
+		const sortOptions: SortOptions<EventParticipant> = { createdAt: SortOrder.ASC };
 		const limitOptions = options?.limit || 10;
 		const foundMembers = this.find(filterOptions, {
 			customRepoOptions: { sort: sortOptions },

@@ -3,7 +3,7 @@ import mongoose, { HydratedDocument } from 'mongoose';
 
 import { Populated } from '@common/crud/entities';
 import { SoftDeletableEntitySchemaDef, toString } from '@common/crud/entities/mongoose-schema';
-import { Visibility } from '@common/enums';
+import { VisibilityLevel } from '@common/enums';
 import { Complete } from '@common/types/utils';
 
 import { User } from '@modules/user/entities';
@@ -22,8 +22,8 @@ export class SocialPostSchemaDef
 	extends SoftDeletableEntitySchemaDef
 	implements Populated<Complete<SocialPost>>
 {
-	@Prop({ type: String, enum: Visibility, required: true, index: true })
-	visibility!: Visibility;
+	@Prop({ type: String, enum: VisibilityLevel, required: true, index: true })
+	visibility!: VisibilityLevel;
 
 	@Prop({ type: String, index: 'text', default: null })
 	content!: string;

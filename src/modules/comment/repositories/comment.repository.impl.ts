@@ -4,7 +4,7 @@ import { Model, PipelineStage } from 'mongoose';
 
 import { CreateType, Populated } from '@common/crud/entities';
 import { MongooseRepositoryImpl, QueryOptions, SortOptions } from '@common/crud/repos';
-import { SORT } from '@common/enums';
+import { SortOrder } from '@common/enums';
 import { CursorPaginationOption } from '@common/types/data';
 
 import { CustomRequestCtx } from '@shared/modules/request-ctx/types';
@@ -40,7 +40,7 @@ export class CommentRepositoryImpl
 			targetId,
 			...(options?.cursor && this.transformFilter({ _id: { $gt: options?.cursor } })),
 		};
-		const sortOptions: SortOptions<Comment> = { createdAt: SORT.ASC };
+		const sortOptions: SortOptions<Comment> = { createdAt: SortOrder.ASC };
 		const limitOptions = options?.limit || 10;
 		const foundComments = this.find(filterOptions, {
 			customRepoOptions: { sort: sortOptions },

@@ -1,7 +1,7 @@
 import { Exclude, Expose, Transform, Type } from 'class-transformer';
 
 import { Populated } from '@common/crud/entities';
-import { Visibility } from '@common/enums';
+import { VisibilityLevel } from '@common/enums';
 
 import { PostType } from '@modules/post/enums';
 import { User } from '@modules/user/entities';
@@ -17,7 +17,7 @@ export class ResponsePostDto {
 	postType!: PostType;
 
 	@Expose()
-	visibility!: Visibility;
+	visibility!: VisibilityLevel;
 
 	@Expose()
 	content!: string;

@@ -1,4 +1,4 @@
-export enum Visibility {
+export enum VisibilityLevel {
 	PRIVATE = 'private',
 	PUBLIC = 'public',
 	FRIENDS = 'friends',

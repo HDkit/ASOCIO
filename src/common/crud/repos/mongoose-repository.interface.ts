@@ -1,9 +1,9 @@
 /**
  * A lot of type assertion due to the excessive use of LowerBound type
  */
-import { Model, PopulateOptions, SortOrder } from 'mongoose';
+import { Model, PopulateOptions } from 'mongoose';
 
-import { SORT } from '@common/enums';
+import { SortOrder } from '@common/enums';
 import { EntityNotFound } from '@common/exceptions';
 import { Class, LowerBound } from '@common/types/utils/';
 
@@ -50,7 +50,7 @@ export class MongooseRepositoryImpl<T extends IBaseEntity> implements IBaseRepos
 	protected mergeRepoOptions(repoOptions: RepoOptions<T>) {
 		const filter = this.mergeFilter({ ...repoOptions.filter } as QuerriableType<T>);
 		const populate = this.mergePopulate([...(repoOptions.populate ?? [])]);
-		const sort = this.mergeSort({ ...repoOptions.sort } as Record<keyof T, SORT>);
+		const sort = this.mergeSort({ ...repoOptions.sort } as Record<keyof T, SortOrder>);
 		this.repoOptions = { filter, populate, sort };
 	}
 

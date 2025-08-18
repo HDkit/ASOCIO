@@ -10,7 +10,7 @@ import {
 import { Injectable } from '@nestjs/common';
 import mongoose from 'mongoose';
 
-import { Action, Role, SystemEntity, Visibility } from '@common/enums';
+import { Action, Role, SystemEntity, VisibilityLevel } from '@common/enums';
 
 import { Sub } from '@modules/auth/types';
 import { Comment } from '@modules/comment/entities';
@@ -57,9 +57,9 @@ export class CaslAbilityFactory {
 				// can create post
 				can(Action.CREATE, SocialPost);
 				// privacy for read
-				can(Action.READ, SocialPost, { visibility: Visibility.PUBLIC });
+				can(Action.READ, SocialPost, { visibility: VisibilityLevel.PUBLIC });
 				can(Action.READ, SocialPost, {
-					visibility: Visibility.LIMITED,
+					visibility: VisibilityLevel.LIMITED,
 					visibleToUsersIds: {
 						$in: [new mongoose.Types.ObjectId(user.id) as unknown as string],
 					},

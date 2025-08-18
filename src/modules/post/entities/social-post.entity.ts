@@ -1,10 +1,10 @@
 import { ISoftDeletableEntity } from '@common/crud/entities';
-import { Visibility } from '@common/enums';
+import { VisibilityLevel } from '@common/enums';
 
 import { PostType } from '../enums';
 
 export class SocialPost extends ISoftDeletableEntity {
-	visibility!: Visibility;
+	visibility!: VisibilityLevel;
 	content!: string | null;
 
 	userId!: string;

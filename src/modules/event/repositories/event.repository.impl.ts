@@ -4,7 +4,7 @@ import { Model } from 'mongoose';
 
 import { Populated, QuerriableType } from '@common/crud/entities';
 import { MongooseSoftDeleteRepositoryImpl, SortOptions } from '@common/crud/repos';
-import { SORT } from '@common/enums';
+import { SortOrder } from '@common/enums';
 import { CursorPaginationOption } from '@common/types/data';
 
 import { Event } from '../entities';
@@ -27,7 +27,7 @@ export class EventRepositoryImpl
 			...where,
 			...(options?.cursor && this.transformFilter({ _id: { $gt: options?.cursor } })),
 		};
-		const sortOptions: SortOptions<Event> = { createdAt: SORT.ASC };
+		const sortOptions: SortOptions<Event> = { createdAt: SortOrder.ASC };
 		const limitOptions = options?.limit || 10;
 		const foundEvents = this.find(filterOptions, {
 			customRepoOptions: { sort: sortOptions },

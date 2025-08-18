@@ -4,7 +4,7 @@ import { HasExtension, HasMimeType, IsFile, MemoryStoredFile } from 'nestjs-form
 
 import { MAX_FILES_NUM } from '@common/constants';
 import { AnyOf, IsValidId } from '@common/decorators/class-validator';
-import { Visibility } from '@common/enums';
+import { VisibilityLevel } from '@common/enums';
 
 import { PostType } from '../../enums';
 
@@ -16,8 +16,8 @@ export class CreatePostDto {
 	content?: string;
 
 	@Expose()
-	@IsEnum(Visibility)
-	visibility!: Visibility;
+	@IsEnum(VisibilityLevel)
+	visibility!: VisibilityLevel;
 
 	@Expose()
 	@IsEnum(PostType)
