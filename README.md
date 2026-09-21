@@ -1,98 +1,249 @@
 <p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
+  <img src="https://nestjs.com/img/logo-small.svg" width="120" alt="ASOCIO Logo" />
 </p>
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+<h1 align="center">ASOCIO</h1>
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
+<p align="center">
+  A production-grade social platform backend built with <a href="https://nestjs.com">NestJS</a>, MongoDB, and TypeScript.
 </p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
 
-## Description
+<p align="center">
+  <a href="https://nodejs.org"><img src="https://img.shields.io/badge/node-v22.12.0-339933?logo=node.js&logoColor=white" alt="Node.js" /></a>
+  <a href="https://www.typescriptlang.org"><img src="https://img.shields.io/badge/TypeScript-5.8-3178c6?logo=typescript&logoColor=white" alt="TypeScript" /></a>
+  <a href="https://nestjs.com"><img src="https://img.shields.io/badge/NestJS-11-ea2845?logo=nestjs&logoColor=white" alt="NestJS" /></a>
+  <a href="https://www.mongodb.com"><img src="https://img.shields.io/badge/MongoDB-7-47a248?logo=mongodb&logoColor=white" alt="MongoDB" /></a>
+  <a href="https://github.com/HDkit/ASOCIO/actions"><img src="https://img.shields.io/github/actions/workflow/status/HDkit/ASOCIO/ci-cd.yml?branch=master&label=CI%2FCD" alt="CI/CD" /></a>
+  <a href="https://eslint.org"><img src="https://img.shields.io/badge/lint-eslint-4B32C3?logo=eslint&logoColor=white" alt="ESLint" /></a>
+  <a href="https://prettier.io"><img src="https://img.shields.io/badge/code_style-prettier-ff69b4?logo=prettier&logoColor=white" alt="Prettier" /></a>
+  <img src="https://img.shields.io/badge/license-UNLICENSED-informational" alt="License" />
+</p>
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+---
 
-## Project setup
+## About
 
-```bash
-$ yarn install
+ASOCIO is a REST API for a social platform: users, friendships, posts, comments, reactions, real-time notifications, and events. It is built on NestJS with MongoDB (Mongoose), JWT-based authentication, CASL row-level authorization, Zod-validated environment configuration, and i18n support (English & Vietnamese).
+
+- **API base path:** `/api/v1` (global prefix `api`, URI versioning)
+- **API docs:** Swagger UI served from a static spec at `/api-docs`
+- **Node.js:** `>= v22.12.0` (see `.nvmrc`)
+
+## Features
+
+### Authentication (`/auth`)
+- JWT access + refresh token flow with dedicated passport strategies (`access-jwt`, `refresh-jwt`)
+- Login with **email or phone** + password (bcrypt-hashed)
+- Registration and silent refresh
+- Google OAuth 2.0 login & callback (`passport-google-oauth20`)
+
+### Users (`/client/users`)
+- Profile view (self / others), user list
+- Onboarding setup (`setup` & `setup/google`) to assign the default `user` role
+- Avatar upload, soft-delete/deactivate, online status, sports with player levels
+
+### Relationships (`/client/users`)
+- Friend system built on a `none` / `friend` / `blocked` state
+- Send / cancel / accept / deny requests, un-friend, block / unblock
+
+### Posts (`/client/posts`)
+- Social posts with 3 types: `FILES` (file embeds), `EVENT` (event embed), `SHARED` (share of another post)
+- Multi-file uploads, delete-on-update cleanup
+- Visibility levels: private / public / friends / limited / excluded
+- Cursor-paginated feed, sharing via `parentPostId`
+- CASL row-level authorization for ownership & visibility
+
+### Comments (`/client/posts`)
+- Nested replies (`rootId` / `targetId`) with file attachments
+- Per-comment reaction counts and transactional delete-self-and-descendants
+
+### Reactions (`/client/posts`)
+- Generic reactions on posts & comments (upsert / unreact, cursor-paginated list, counts)
+- Unique `userId + targetId` constraint
+
+### Events (`/client/events`)
+- Event CRUD with multipart cover uploads
+- Member management (`ORGANIZER` / `GUEST` roles), join, invite, share (creates a post embedding the event)
+- Cursor-paginated search across events & members, transactional writes
+
+### Notifications (`/notifications`)
+- In-app notifications stored in MongoDB, pushed **real-time via Server-Sent Events (SSE)**
+- Types: `FRIEND_REQUEST`, `FRIEND_ACCEPTED`, `REACTED`, `COMMENTED`, `EVENT_INVITE`
+- Cursor-paginated list and mark-as-read
+- Fired through `@nestjs/event-emitter`
+
+### Platform concerns
+- **Security:** global JWT guard (`@Public` escape hatch), `@Roles` and priority-based `@PriorityRole` guards, bcrypt hashing, rate limiting (60 req / 60s)
+- **Authorization:** CASL ability factory over Mongoose query filters
+- **Observability:** Winston logging, global exception filters (HTTP, Mongo, Mongoose, custom), response transformation interceptor
+- **Reliability:** Mongo transaction sessions via a shared DataService, Zod-validated env config
+- **i18n:** `nestjs-i18n` with `en` / `vi` locales (fallback `en`)
+- **CI/CD:** GitHub Actions — lint, test, build on every push; Docker image publish on `master`
+
+## Tech Stack
+
+| Layer      | Technology                                                            |
+| ---------- | --------------------------------------------------------------------- |
+| Framework  | [NestJS 11](https://nestjs.com) + TypeScript 5.8                        |
+| Database   | [MongoDB 7](https://www.mongodb.com) via [Mongoose 8](https://mongoosejs.com) |
+| Auth       | `@nestjs/jwt`, passport (JWT + Google OAuth 2.0)                       |
+| Authz      | [CASL](https://casl.js.org) (`@casl/ability`, `@casl/mongoose`)        |
+| Validation | `class-validator`, `class-transformer`, [Zod](https://zod.dev) (env)   |
+| Real-time  | Server-Sent Events + `@nestjs/event-emitter`                           |
+| Logging    | Winston (`nest-winston`)                                               |
+| Uploads    | ImageKit client-side upload (private key)                              |
+| Tooling    | SWC builder, ESLint, Prettier, Husky, lint-staged, Jest                |
+
+## Project Structure
+
+```
+src/
+├── app.module.ts            # root module: global filters/guards/interceptors
+├── main.ts                  # bootstrap, global prefix, validation pipe, Swagger UI
+├── common/                  # decorators, filters, guards, interceptors, middlewares
+├── configs/                 # Zod-validated env config (config, database, jwt)
+├── i18n/                    # en / vi locale files
+├── modules/                 # feature modules
+│   ├── admin/
+│   ├── auth/
+│   ├── comment/
+│   ├── dev/                 # RBAC test routes (development only)
+│   ├── event/
+│   ├── notification/
+│   ├── post/
+│   ├── reaction/
+│   ├── relationship/
+│   ├── router/              # URL wiring: /auth, /notifications, /admin, /client/*, /dev
+│   └── user/
+├── shared/modules/          # CASL, DataService (tx sessions), FileHost, Logger, SSE
+└── router/                  # global routing configuration
+docs/                        # openapi.json + coding conventions
 ```
 
-## Compile and run the project
+## Environment Variables
+
+Copy `.env.example` to `.env` and fill in the values:
 
 ```bash
-# development
-$ yarn run start
-
-# watch mode
-$ yarn run start:dev
-
-# production mode
-$ yarn run start:prod
+cp .env.example .env
 ```
 
-## Run tests
+| Variable                          | Required | Description                          | Default |
+| --------------------------------- | -------- | ------------------------------------ | ------- |
+| `NODE_ENV`                        | ✅        | `development` or `production`        | —       |
+| `PORT`                            | ❌        | HTTP server port                     | `3000`  |
+| `DATABASE_URI`                    | ✅        | MongoDB connection string            | —       |
+| `JWT_SECRET`                      | ✅        | Access token signing secret          | —       |
+| `JWT_REFRESH_SECRET`              | ✅        | Refresh token signing secret         | —       |
+| `JWT_ACCESS_TOKEN_EXPIRATION`     | ❌        | Access token TTL                     | `15m`   |
+| `JWT_REFRESH_TOKEN_EXPIRATION`    | ❌        | Refresh token TTL                    | `7d`    |
+| `GOOGLE_OA2_CLIENT_ID`            | ✅        | Google OAuth 2.0 client ID           | —       |
+| `GOOGLE_OA2_CLIENT_SECRET`        | ✅        | Google OAuth 2.0 client secret       | —       |
+| `IMGKIT_API_PRIVATE_KEY`          | ✅        | ImageKit private API key (uploads)   | —       |
+
+> All env vars are validated at startup with a Zod schema — the app will refuse to boot with missing/invalid values.
+
+## Getting Started
+
+### Prerequisites
+
+- **Node.js** `>= v22.12.0` (recommend using `nvm` with the pinned `.nvmrc`)
+- **MongoDB** `7.x` — either a local instance or via Docker
+
+### 1. Install dependencies
+
+```bash
+npm install
+```
+
+### 2. Configure environment
+
+```bash
+cp .env.example .env
+# edit .env and provide DATABASE_URI, JWT secrets, Google OAuth and ImageKit keys
+```
+
+### 3. Run the app
+
+```bash
+# development (watch mode, SWC builder)
+npm run start:dev
+
+# production
+npm run build
+npm run start:prod
+```
+
+The server starts at `http://localhost:3000` (or the configured `PORT`):
+- API: `http://localhost:3000/api/v1`
+- Swagger UI docs: `http://localhost:3000/api-docs`
+
+### Using Docker (API + MongoDB)
+
+```bash
+cp .env.example .env
+docker compose up --build
+```
+
+This starts:
+- **nestjs_app** — the API on `http://localhost:3000`
+- **mongodb** — MongoDB 7 on port `28017`
+
+### Development-only routes
+
+When `NODE_ENV=development`, the `DevModule` is registered and enables RBAC test endpoints under `/api/v1/dev` (`/admin-only`, `/moderator-and-admin`, `/all-users`, `/gte-moderator`).
+
+## Available Scripts
+
+| Script               | Description                                          |
+| -------------------- | ---------------------------------------------------- |
+| `npm run start`      | Run compiled `dist/main` in production mode          |
+| `npm run start:dev`  | Watch mode with SWC builder (development)            |
+| `npm run start:debug`| Debug + watch mode (development)                     |
+| `npm run start:prod` | Run compiled `dist/main` in production               |
+| `npm run build`      | Build with SWC (`nest build --builder swc`)          |
+| `npm run format`     | Prettier over `src` and `test`                       |
+| `npm run lint`       | ESLint with `--fix` on `src`, `apps`, `libs`, `test` |
+| `npm run test`       | Unit tests (Jest)                                    |
+| `npm run test:watch` | Tests in watch mode                                  |
+| `npm run test:cov`   | Tests with coverage                                  |
+| `npm run test:e2e`   | e2e tests (`test/jest-e2e.json`)                     |
+| `npm run test:debug` | Debug tests with ts-node                             |
+
+## Tests
 
 ```bash
 # unit tests
-$ yarn run test
+npm run test
 
-# e2e tests
-$ yarn run test:e2e
+# watch mode
+npm run test:watch
 
-# test coverage
-$ yarn run test:cov
+# coverage
+npm run test:cov
+
+# e2e
+npm run test:e2e
 ```
 
-## Deployment
+Husky runs `lint-staged` (prettier + eslint) and the test suite before every commit.
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+## API Documentation
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+The OpenAPI 3.0 spec is maintained in `docs/openapi.json` and served via Swagger UI at [`/api-docs`](http://localhost:3000/api-docs). Requests require a Bearer token obtained from the `/auth` endpoints.
 
-```bash
-$ yarn install -g @nestjs/mau
-$ mau deploy
-```
+Also see:
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+- `docs/CONVENTION.md` — entity / schema typing conventions
+- `docs/CODE_STYLE.md` — code style guide (decorators, ordering)
 
-## Resources
+## Contributions
 
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+1. Fork the repo and create a branch from `master`
+2. Make your changes
+3. Ensure `npm run lint`, `npm run test`, and `npm run build` pass
+4. Open a pull request (use the provided PR template)
 
 ## License
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+UNLICENSED — private project. See `package.json`.
