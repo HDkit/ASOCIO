@@ -1,12 +1,12 @@
 {
 	"compilerOptions": {
-		"module": "commonjs",
+		"module": "nodenext",
 		"declaration": true,
 		"removeComments": true,
 		"emitDecoratorMetadata": true,
 		"experimentalDecorators": true,
 		"allowSyntheticDefaultImports": true,
-		"target": "ES2023",
+		"target": "es2023",
 		"sourceMap": true,
 		"outDir": "./dist",
 		"baseUrl": "./",
@@ -16,13 +16,13 @@
 			"@configs/*": ["src/configs/*"],
 			"@languages/*": ["src/languages/*"],
 			"@modules/*": ["src/modules/*"],
-			"@router/*": ["src/router/*"],
 			"@app": ["src/app"],
 			"@common": ["src/common"],
 			"@configs": ["src/configs"],
 			"@languages": ["src/languages"],
 			"@modules": ["src/modules"],
-			"@router": ["src/router"]
+			"@shared/*": ["src/shared/*"],
+			"@shared": ["src/shared"]
 		},
 		"incremental": true,
 		"skipLibCheck": true,
@@ -31,6 +31,9 @@
 		"noImplicitAny": false,
 		"strictBindCallApply": false,
 		"noFallthroughCasesInSwitch": false,
-		"esModuleInterop": true
+		"esModuleInterop": true,
+		"moduleResolution": "nodenext",
+		"resolveJsonModule": true,
+		"strict": true
 	}
 }

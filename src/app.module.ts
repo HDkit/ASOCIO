@@ -1,16 +1,38 @@
-import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { ConditionalModule, ConfigModule, ConfigService } from '@nestjs/config';
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { MongooseModule } from '@nestjs/mongoose';
-import { DatabaseConfig, Config } from '@configs';
-import { LoggerModule } from '@common/logger/logger.module';
-import { RouteModule } from '@router/router.module';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AcceptLanguageResolver, I18nModule, QueryResolver } from 'nestjs-i18n';
 import path from 'path';
-import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
-import { GlobalExceptionFilter, CustomExceptionFilter, HttpExceptionFilter } from '@common/filters';
-import { JwtAuthGuard } from '@common/guards';
-import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
-import { ResponseTransformInterceptor } from '@common/interceptor/response-transform.interceptor';
+
+import {
+	CustomExceptionFilter,
+	GlobalExceptionFilter,
+	HttpExceptionFilter,
+	MongoExceptionFilter,
+	MongooseExceptionFilter,
+} from '@common/filters';
+import { PriorityRoleGuard, RolesGuard } from '@common/guards';
+import { ResponseTransformInterceptor } from '@common/interceptors';
+import { CustomRequestContextInitMiddleware } from '@common/middlewares';
+
+import { Config, DatabaseConfig } from '@configs';
+
+import { AdminModule } from '@modules/admin';
+import { AuthModule } from '@modules/auth';
+import { JwtAuthGuard } from '@modules/auth/guards';
+import { CommentModule } from '@modules/comment';
+import { DevModule } from '@modules/dev';
+import { EventModule } from '@modules/event';
+import { NotificationModule } from '@modules/notification';
+import { PostModule } from '@modules/post';
+import { RelationshipModule } from '@modules/relationship';
+import { RouteModule } from '@modules/router';
+import { UserModule } from '@modules/user';
+
+import { CustomRequestCtxModule, LoggerModule } from '@shared/modules';
 
 @Module({
 	imports: [
@@ -43,6 +65,31 @@ import { ResponseTransformInterceptor } from '@common/interceptor/response-trans
 			],
 			errorMessage: 'Rate limit reached',
 		}),
+		CustomRequestCtxModule,
+		EventEmitterModule.forRoot({
+			wildcard: false,
+			delimiter: '.',
+			newListener: true,
+			removeListener: true,
+			maxListeners: 10,
+			verboseMemoryLeak: true,
+			ignoreErrors: false,
+		}),
+		/* dev modules for testing */
+		ConditionalModule.registerWhen(
+			DevModule,
+			(env: NodeJS.ProcessEnv) => env.NODE_ENV === 'development',
+		),
+		/* production modules */
+		AuthModule,
+		AdminModule,
+		EventModule,
+		NotificationModule,
+		PostModule,
+		CommentModule,
+		UserModule,
+		RelationshipModule,
+		EventModule,
 	],
 	providers: [
 		{
@@ -58,6 +105,14 @@ import { ResponseTransformInterceptor } from '@common/interceptor/response-trans
 			useClass: HttpExceptionFilter,
 		},
 		{
+			provide: APP_FILTER,
+			useClass: MongoExceptionFilter,
+		},
+		{
+			provide: APP_FILTER,
+			useClass: MongooseExceptionFilter,
+		},
+		{
 			provide: APP_GUARD,
 			useClass: JwtAuthGuard,
 		},
@@ -66,9 +121,21 @@ import { ResponseTransformInterceptor } from '@common/interceptor/response-trans
 			useClass: ThrottlerGuard,
 		},
 		{
+			provide: APP_GUARD,
+			useClass: RolesGuard,
+		},
+		{
+			provide: APP_GUARD,
+			useClass: PriorityRoleGuard,
+		},
+		{
 			provide: APP_INTERCEPTOR,
 			useClass: ResponseTransformInterceptor,
 		},
 	],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+	configure(consumer: MiddlewareConsumer) {
+		consumer.apply(CustomRequestContextInitMiddleware).forRoutes('*');
+	}
+}

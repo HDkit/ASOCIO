@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { UserService } from '@modules/user/providers/user.service';
+
 import { Payload, Tokens } from '../types';
 
 @Injectable()
@@ -8,7 +8,6 @@ export class TokenService {
 	constructor(
 		@Inject('JWT_ACCESS_TOKEN') private readonly AccessTokenService: JwtService,
 		@Inject('JWT_REFRESH_TOKEN') private readonly RefreshTokenService: JwtService,
-		private readonly userService: UserService,
 	) {}
 
 	async generateTokens(payload: Payload, genRefresh: boolean = false): Promise<Tokens> {
@@ -24,11 +23,11 @@ export class TokenService {
 		};
 	}
 
-	private async generateAccessToken(payload: Payload) {
+	private async generateAccessToken(payload: Payload): Promise<string> {
 		return this.AccessTokenService.signAsync(payload);
 	}
 
-	private async generateRefreshToken(payload: Payload) {
+	private async generateRefreshToken(payload: Payload): Promise<string> {
 		const token = await this.RefreshTokenService.signAsync(payload);
 		return token;
 	}

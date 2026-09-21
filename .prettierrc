@@ -18,7 +18,9 @@
 		"^@configs(/.*)?$",
 		"^@languages(/.*)?$",
 		"^@modules(/.*)?$",
-		"^@router(/.*)?$",
+		"^@shared(/.*)?$",
 		"^[./]"
-	]
+	],
+	"plugins": ["@trivago/prettier-plugin-sort-imports"],
+	"importOrderParserPlugins": ["typescript", "decorators-legacy"]
 }

@@ -1,5 +1,6 @@
 import { ConfigService } from '@nestjs/config';
 import { JwtModuleOptions } from '@nestjs/jwt';
+
 import { IEnvVars } from '@configs/config';
 
 export default (configService: ConfigService<IEnvVars>): JwtModuleOptions => ({

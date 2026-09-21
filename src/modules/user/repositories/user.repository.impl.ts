@@ -1,29 +1,56 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { User } from '../entities/user.schema';
+import { FilterQuery, Model } from 'mongoose';
+
+import { GRACE_PERIOD } from '@common/constants';
+import { CreateType, Populated, QuerriableType } from '@common/crud/entities';
+import { MongooseSoftDeleteRepositoryImpl, QueryOptions } from '@common/crud/repos';
+
+import { User } from '../entities';
+import { UserGoogleRegisterInput, UserRegisterInput } from '../types';
 import { IUserRepository } from './user.repository';
-import { EntityNotFound } from '@common/exceptions/EntityNotFound.error';
 
 @Injectable()
-export class UserRepositoryImpl implements IUserRepository {
-	constructor(@InjectModel(User.name) private readonly userModel: Model<User>) {}
-
-	async create(data: Partial<User>): Promise<User> {
-		return new this.userModel(data).save();
+export class UserRepositoryImpl
+	extends MongooseSoftDeleteRepositoryImpl<User>
+	implements IUserRepository
+{
+	constructor(@InjectModel(User.name) private readonly userModel: Model<User>) {
+		super(userModel, User, {
+			populate: ['deletedBy'],
+		});
 	}
 
-	async update(id: string, data: Partial<User>): Promise<User> {
-		const updatedUser = await this.userModel.findByIdAndUpdate(id, data);
-		if (updatedUser === null) throw new EntityNotFound(User);
-		return updatedUser;
+	async createForRegistration(
+		data: CreateType<UserRegisterInput>,
+		queryOptions?: QueryOptions<User>,
+	): Promise<Populated<User>> {
+		return this.createSoft(data, queryOptions);
 	}
 
-	async findOneByUsername(username: string): Promise<User | null> {
-		return await this.userModel.findOne({ username });
+	async createForGoogleRegistration(
+		data: CreateType<UserGoogleRegisterInput>,
+		queryOptions?: QueryOptions<User>,
+	): Promise<Populated<User>> {
+		return this.createSoft(data, queryOptions);
 	}
 
-	async findOneById(id: string): Promise<User | null> {
-		return await this.userModel.findById(id);
+	async findOneByUsername(username: string): Promise<Populated<User> | null> {
+		const foundUser = this.findOneBy({ username });
+		return foundUser;
+	}
+
+	async findOneLoginable(where: QuerriableType<User>): Promise<Populated<User> | null> {
+		const filter: FilterQuery<User> = this.transformFilter({
+			...where,
+			$or: [
+				{ deleted: false },
+				{
+					$expr: { $eq: ['$deletedBy', '$_id'] },
+					deletedAt: { $gte: new Date(Date.now() - GRACE_PERIOD * 24 * 60 * 60 * 1000) },
+				},
+			],
+		});
+		return this.findOneBy(filter, { doNotUseRepoOptions: ['filter'] });
 	}
 }

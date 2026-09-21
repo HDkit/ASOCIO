@@ -1,10 +1,12 @@
-import { ArgumentsHost, ExceptionFilter, HttpStatus, Catch } from '@nestjs/common';
-import { CustomError, EntityNotFound } from '@common/exceptions';
-import { ResponseEntity } from '@common/types';
-import { Response, Request } from 'express';
+import { ArgumentsHost, Catch, ExceptionFilter, HttpStatus } from '@nestjs/common';
+import { Request, Response } from 'express';
 import { I18nService } from 'nestjs-i18n';
-import { AppLoggerService } from '@common/logger/logger.service';
-import { ResponseTransform } from '@common/decorators/response-transform.decorator';
+
+import { ResponseTransform } from '@common/decorators';
+import { CustomError, EntityNotFound } from '@common/exceptions';
+import { ResponseEntity } from '@common/types/data';
+
+import { AppLoggerService } from '@shared/modules/logger';
 
 @Catch(CustomError)
 export class CustomExceptionFilter implements ExceptionFilter {
@@ -36,22 +38,14 @@ export class CustomExceptionFilter implements ExceptionFilter {
 		});
 
 		if (exception instanceof EntityNotFound) {
-			return {
-				path: req.url,
-				statusCode: HttpStatus.NOT_FOUND,
-				success: false,
-				timestamp: Date.now(),
-				error: translatedMessage,
-				data: null,
-			};
+			return new ResponseEntity<null>(req.url, HttpStatus.NOT_FOUND, null, translatedMessage);
 		}
-		return {
-			path: req.url,
-			statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-			success: false,
-			timestamp: Date.now(),
-			error: translatedMessage,
-			data: null,
-		};
+
+		return new ResponseEntity<null>(
+			req.url,
+			HttpStatus.INTERNAL_SERVER_ERROR,
+			null,
+			translatedMessage,
+		);
 	}
 }

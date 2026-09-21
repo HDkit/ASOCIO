@@ -1,0 +1,1382 @@
+{
+	"openapi": "3.0.0",
+	"paths": {
+		"/api/v1/auth/login": {
+			"post": {
+				"description": "Đăng nhập tài khoản người dùng",
+				"operationId": "AuthController_login_v1",
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/LoginDto"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Login thành công",
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/Response"
+										},
+										{
+											"type": "object",
+											"properties": {
+												"data": {
+													"$ref": "#/components/schemas/ResponseAuthDto"
+												}
+											}
+										}
+									]
+								}
+							}
+						}
+					}
+				},
+				"summary": "Login user",
+				"tags": ["Auth"]
+			}
+		},
+		"/api/v1/auth/register": {
+			"post": {
+				"description": "Đăng ký tài khoản mới",
+				"operationId": "AuthController_register_v1",
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/RegisterDto"
+							}
+						}
+					}
+				},
+				"responses": {
+					"201": {
+						"description": "Đăng ký thành công",
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/Response"
+										},
+										{
+											"type": "object",
+											"properties": {
+												"data": {
+													"$ref": "#/components/schemas/ResponseAuthDto"
+												}
+											}
+										}
+									]
+								}
+							}
+						}
+					}
+				},
+				"summary": "Register user",
+				"tags": ["Auth"]
+			}
+		},
+		"/api/v1/auth/refresh": {
+			"post": {
+				"description": "Cấp lại access token từ refresh token",
+				"operationId": "AuthController_refreshToken_v1",
+				"parameters": [],
+				"responses": {
+					"200": {
+						"description": "Xác thực refresh token thành công. Trả về access token.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/Response"
+										},
+										{
+											"type": "object",
+											"properties": {
+												"data": {
+													"type": "object",
+													"properties": {
+														"accessToken": {
+															"type": "string",
+															"description": "Access token mới"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						}
+					}
+				},
+				"security": [
+					{
+						"refreshTokenAuth": []
+					}
+				],
+				"summary": "Refresh token",
+				"tags": ["Auth"]
+			}
+		},
+		"/api/v1/auth/google": {
+			"get": {
+				"responses": {
+					"200": {
+						"description": "OK"
+					}
+				},
+				"tags": ["Auth"]
+			}
+		},
+		"/api/v1/auth/google/callback": {
+			"get": {
+				"description": "Đường dẫn callback route cho login Google. Được điều hướng từ browser, không tự truy cập. Login bằng /client/auth/google",
+				"responses": {
+					"201": {
+						"description": "Đăng ký thành công",
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/Response"
+										},
+										{
+											"type": "object",
+											"properties": {
+												"data": {
+													"$ref": "#/components/schemas/ResponseAuthDto"
+												}
+											}
+										}
+									]
+								}
+							}
+						}
+					}
+				},
+				"tags": ["Auth"]
+			}
+		},
+		"/api/v1/client/users/me": {
+			"get": {
+				"description": "Truy vấn thông tin bản thân",
+				"summary": "Get own profile",
+				"responses": {
+					"200": {
+						"description": "Truy vấn thành công",
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/Response"
+										},
+										{
+											"type": "object",
+											"properties": {
+												"data": {
+													"$ref": "#/components/schemas/ResponseProfileDto"
+												}
+											}
+										}
+									]
+								}
+							}
+						}
+					}
+				},
+				"security": [
+					{
+						"accessTokenAuth": []
+					}
+				],
+				"tags": ["Profile"]
+			},
+			"patch": {
+				"description": "Cập nhật thông tin bản thân",
+				"summary": "Update own profile",
+				"requestBody": {
+					"required": true,
+					"content": {
+						"multipart/form-data": {
+							"schema": {
+								"$ref": "#/components/schemas/UpdateUserDto"
+							}
+						},
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/UpdateUserDto"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Update thành công",
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/Response"
+										},
+										{
+											"type": "object",
+											"properties": {
+												"data": {
+													"allOf": [
+														{ "$ref": "#/components/schemas/ResponseProfileDto" },
+														{ "$ref": "#/components/schemas/ResponseAuthDto" }
+													]
+												}
+											}
+										}
+									]
+								}
+							}
+						}
+					}
+				},
+				"security": [
+					{
+						"accessTokenAuth": []
+					}
+				],
+				"tags": ["Profile"]
+			}
+		},
+		"/api/v1/client/users/setup": {
+			"patch": {
+				"description": "Setup thông tin còn lại cho người dùng",
+				"summary": "Setup own profile",
+				"requestBody": {
+					"required": true,
+					"content": {
+						"multipart/form-data": {
+							"schema": {
+								"$ref": "#/components/schemas/SetupUserDto"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Setup thành công",
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/Response"
+										},
+										{
+											"type": "object",
+											"properties": {
+												"data": {
+													"allOf": [
+														{ "$ref": "#/components/schemas/ResponseProfileDto" },
+														{ "$ref": "#/components/schemas/ResponseAuthDto" }
+													]
+												}
+											}
+										}
+									]
+								}
+							}
+						}
+					}
+				},
+				"security": [
+					{
+						"accessTokenAuth": []
+					}
+				],
+				"tags": ["Profile"]
+			}
+		},
+		"/api/v1/client/users/setup/google": {
+			"patch": {
+				"description": "Setup cho người dùng sử dụng Google. Để biết người nào sử dụng google, tham chiếu đến giá trị của googleLoginInfo",
+				"summary": "Setup profile for Google",
+				"requestBody": {
+					"required": true,
+					"content": {
+						"multipart/form-data": {
+							"schema": {
+								"$ref": "#/components/schemas/SetupGoogleUserDto"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Setup thành công",
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/Response"
+										},
+										{
+											"type": "object",
+											"properties": {
+												"data": {
+													"allOf": [
+														{ "$ref": "#/components/schemas/ResponseProfileDto" },
+														{ "$ref": "#/components/schemas/ResponseAuthDto" }
+													]
+												}
+											}
+										}
+									]
+								}
+							}
+						}
+					}
+				},
+				"security": [
+					{
+						"accessTokenAuth": []
+					}
+				],
+				"tags": ["Profile"]
+			}
+		},
+		"/api/v1/client/posts": {
+			"post": {
+				"tags": ["Social post"],
+				"summary": "Create a new post",
+				"security": [
+					{
+						"accessTokenAuth": []
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"multipart/form-data": {
+							"schema": {
+								"$ref": "#/components/schemas/CreatePostDto"
+							}
+						}
+					}
+				},
+				"responses": {
+					"201": {
+						"description": "Tạo bài viết thành công",
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/Response"
+										},
+										{
+											"type": "object",
+											"properties": {
+												"data": {
+													"$ref": "#/components/schemas/ResponsePostDto"
+												}
+											}
+										}
+									]
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/v1/client/posts/{id}": {
+			"delete": {
+				"tags": ["Social post"],
+				"summary": "Delete a post by ID",
+				"security": [
+					{
+						"accessTokenAuth": []
+					}
+				],
+				"parameters": [
+					{
+						"name": "id",
+						"in": "path",
+						"required": true,
+						"description": "ID bài viết cần xóa",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Xóa bài viết thành công",
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/Response"
+										},
+										{
+											"type": "object",
+											"properties": {
+												"data": {
+													"$ref": "#/components/schemas/ResponsePostDto"
+												}
+											}
+										}
+									]
+								}
+							}
+						}
+					}
+				}
+			},
+			"patch": {
+				"tags": ["Social post"],
+				"summary": "Update a post by ID",
+				"security": [
+					{
+						"accessTokenAuth": []
+					}
+				],
+				"parameters": [
+					{
+						"name": "id",
+						"in": "path",
+						"required": true,
+						"description": "ID bài viết cần cập nhật",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"multipart/form-data": {
+							"schema": {
+								"$ref": "#/components/schemas/UpdatePostDto"
+							}
+						}
+					}
+				},
+				"responses": {
+					"200": {
+						"description": "Cập nhật bài viết thành công",
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/Response"
+										},
+										{
+											"type": "object",
+											"properties": {
+												"data": {
+													"$ref": "#/components/schemas/ResponsePostDto"
+												}
+											}
+										}
+									]
+								}
+							}
+						}
+					}
+				}
+			},
+			"get": {
+				"tags": ["Social post"],
+				"summary": "Get a post by ID",
+				"security": [
+					{
+						"accessTokenAuth": []
+					}
+				],
+				"parameters": [
+					{
+						"name": "id",
+						"in": "path",
+						"required": true,
+						"description": "ID bài viết cần lấy",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Lấy bài viết thành công",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Response"
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/v1/client/posts/feed": {
+			"get": {
+				"tags": ["Social post"],
+				"summary": "Get feed posts with pagination",
+				"security": [
+					{
+						"accessTokenAuth": []
+					}
+				],
+				"parameters": [
+					{
+						"name": "cursor",
+						"in": "query",
+						"required": false,
+						"description": "ID bài viết cuối cùng để phân trang",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "limit",
+						"in": "query",
+						"required": false,
+						"description": "Số lượng bài viết tối đa trả về",
+						"schema": {
+							"type": "integer",
+							"minimum": 1,
+							"default": 10
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"description": "Lấy feed bài viết thành công",
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/CursorPaginatedResponse"
+										},
+										{
+											"type": "object",
+											"properties": {
+												"data": {
+													"type": "array",
+													"items": { "$ref": "#/components/schemas/ResponsePostDto" }
+												}
+											}
+										}
+									]
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	},
+	"info": {
+		"title": "ASOCIO☄ API Documentation",
+		"description": "Swagger docs for ASOCIO endpoints.",
+		"version": "0.1.1",
+		"contact": {
+			"email": "dang.nguyen106@hcmut.edu.vn",
+			"url": "https://github.com/D-ng7721",
+			"name": "D-ng7721"
+		}
+	},
+	"tags": [],
+	"servers": [],
+	"components": {
+		"securitySchemes": {
+			"refreshTokenAuth": {
+				"type": "http",
+				"scheme": "bearer",
+				"bearerFormat": "JWT",
+				"description": "Gán giá trị \"Bearer {refreshToken}\" trong Authorization header"
+			},
+			"accessTokenAuth": {
+				"type": "http",
+				"scheme": "bearer",
+				"bearerFormat": "JWT",
+				"description": "Gán giá trị \"Bearer {accessToken}\" trong Authorization header"
+			}
+		},
+		"schemas": {
+			"Response": {
+				"type": "object",
+				"title": "ResponseEntity",
+				"description": "Cấu trúc phản hồi API chuẩn",
+				"properties": {
+					"path": {
+						"type": "string",
+						"description": "Đường dẫn API",
+						"example": "/api/v1/dev/all-users"
+					},
+					"statusCode": {
+						"type": "number",
+						"description": "HTTP status code",
+						"example": 200
+					},
+					"success": {
+						"type": "boolean",
+						"description": "true nếu không có lỗi, false nếu có lỗi"
+					},
+					"timestamp": {
+						"oneOf": [
+							{ "type": "string", "format": "date-time" },
+							{ "type": "string" },
+							{ "type": "number" }
+						],
+						"description": "Thời điểm trả response",
+						"example": 1751271347625
+					},
+					"error": {
+						"oneOf": [
+							{
+								"type": "string",
+								"description": "Thông báo lỗi"
+							},
+							{
+								"type": "object",
+								"additionalProperties": {
+									"type": "string"
+								},
+								"description": "Danh sách key-value các field bị lỗi và thông báo lỗi",
+								"example": {
+									"username": "username already existed inside the database",
+									"mail": "mail already existed inside the database"
+								}
+							}
+						],
+						"description": "Error message nếu có",
+						"nullable": true
+					},
+					"data": {
+						"type": "object",
+						"description": "Response data; có giá trị null nếu có error"
+					}
+				},
+				"required": ["path", "statusCode", "success", "timestamp", "data"]
+			},
+			"PaginatedResponse": {
+				"type": "object",
+				"title": "PaginatedResponseEntity",
+				"description": "Cấu trúc phản hồi API cho dữ liệu phân trang chuẩn",
+				"allOf": [
+					{
+						"$ref": "#/components/schemas/Response"
+					},
+					{
+						"type": "object",
+						"properties": {
+							"page": {
+								"type": "number",
+								"description": "Trang hiện tại"
+							},
+							"amount": {
+								"type": "number",
+								"description": "Số kết quả trả về"
+							}
+						}
+					}
+				],
+				"required": ["page", "amount"]
+			},
+			"CursorPaginatedResponse": {
+				"type": "object",
+				"title": "CursorPaginatedResponseEntity",
+				"description": "Cấu trúc phản hồi API cho dữ liệu phân trang sử dụng cursor chuẩn",
+				"allOf": [
+					{
+						"$ref": "#/components/schemas/Response"
+					},
+					{
+						"type": "object",
+						"properties": {
+							"cursor": {
+								"type": "string",
+								"description": "Cursor để query trang tiếp theo"
+							},
+							"amount": {
+								"type": "number",
+								"description": "Số kết quả trả về"
+							}
+						}
+					}
+				],
+				"required": ["cursor", "amount"]
+			},
+			"LoginDto": {
+				"type": "object",
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "Số điện thoại (Bắt đầu bằng dấu + và mã quốc tế +XX) hoặc email người dùng.",
+						"example": "+84369963369"
+					},
+					"password": {
+						"type": "string",
+						"description": "Mật khẩu của người dùng",
+						"example": "StrongP@ssw0rd"
+					}
+				},
+				"required": ["id", "password"]
+			},
+			"RegisterDto": {
+				"type": "object",
+				"allOf": [
+					{
+						"$ref": "#/components/schemas/CreateUserDto"
+					}
+				]
+			},
+			"ResponseAuthDto": {
+				"type": "object",
+				"properties": {
+					"accessToken": {
+						"type": "string",
+						"description": "Access token trả về sau khi đăng nhập hoặc refresh"
+					},
+					"refreshToken": {
+						"type": "string",
+						"description": "Refresh token đi kèm với access token"
+					}
+				}
+			},
+			"CreateUserDto": {
+				"type": "object",
+				"properties": {
+					"username": {
+						"type": "string",
+						"example": "john_doe"
+					},
+					"password": {
+						"type": "string",
+						"format": "password",
+						"description": "Strong password required"
+					},
+					"mail": {
+						"type": "string",
+						"format": "email",
+						"example": "john@example.com"
+					},
+					"phone": {
+						"type": "string",
+						"example": "+1234567890"
+					}
+				},
+				"required": ["username", "password", "mail", "phone"],
+				"additionalProperties": false
+			},
+			"PartialCreateUserDto": {
+				"type": "object",
+				"properties": {
+					"username": {
+						"type": "string",
+						"example": "john_doe"
+					},
+					"password": {
+						"type": "string",
+						"format": "password",
+						"description": "Strong password required"
+					},
+					"mail": {
+						"type": "string",
+						"format": "email",
+						"example": "john@example.com"
+					},
+					"phone": {
+						"type": "string",
+						"example": "+1234567890"
+					}
+				},
+				"additionalProperties": false
+			},
+			"UpdateUserDto": {
+				"allOf": [
+					{
+						"$ref": "#/components/schemas/PartialCreateUserDto"
+					},
+					{
+						"type": "object",
+						"properties": {
+							"avatar": {
+								"type": "string",
+								"format": "binary",
+								"description": "Avatar file. Đuôi png/jpg/jpeg/gif"
+							},
+							"location": {
+								"$ref": "#/components/schemas/LocationDto"
+							},
+							"sports": {
+								"type": "array",
+								"items": { "$ref": "#/components/schemas/SportDto" }
+							}
+						}
+					}
+				]
+			},
+			"SetupUserDto": {
+				"type": "object",
+				"properties": {
+					"avatar": {
+						"type": "string",
+						"format": "binary",
+						"description": "Avatar file. Đuôi png/jpg/jpeg/gif"
+					},
+					"location": {
+						"$ref": "#/components/schemas/Location"
+					},
+					"sports": {
+						"type": "array",
+						"items": {
+							"$ref": "#/components/schemas/Sport"
+						},
+						"uniqueItems": true
+					}
+				},
+				"required": ["avatar", "location", "sports"],
+				"additionalProperties": false
+			},
+			"SetupGoogleUserDto": {
+				"type": "object",
+				"properties": {
+					"avatar": {
+						"type": "string",
+						"format": "binary",
+						"description": "Avatar file. Đuôi png/jpg/jpeg/gif"
+					},
+					"location": {
+						"$ref": "#/components/schemas/Location"
+					},
+					"sports": {
+						"type": "array",
+						"items": {
+							"$ref": "#/components/schemas/Sport"
+						},
+						"uniqueItems": true
+					},
+					"username": {
+						"type": "string",
+						"description": "Tên đăng nhập, có thể bỏ qua nếu đã có."
+					},
+					"password": {
+						"type": "string",
+						"description": "Mật khẩu mạnh bắt buộc",
+						"format": "password",
+						"minLength": 8,
+						"pattern": "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*\\W).+$"
+					},
+					"mail": {
+						"type": "string",
+						"format": "email",
+						"description": "Địa chỉ email, có thể bỏ qua"
+					},
+					"phone": {
+						"type": "string",
+						"description": "Số điện thoại, bắt buộc"
+					}
+				},
+				"required": ["location", "sports", "password", "phone"]
+			},
+			"ResponseUserDto": {
+				"type": "object",
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "ID người dùng"
+					},
+					"username": {
+						"type": "string",
+						"description": "Tên đăng nhập"
+					},
+					"roles": {
+						"type": "array",
+						"items": {
+							"$ref": "#/components/schemas/Role"
+						},
+						"description": "Danh sách vai trò của người dùng"
+					},
+					"avatarUrl": {
+						"type": "string",
+						"nullable": true,
+						"description": "URL ảnh đại diện, có thể null cho người dùng chưa setup"
+					},
+					"location": { "$ref": "#/components/schemas/Location" },
+					"status": { "$ref": "#/components/schemas/Status" },
+					"sports": { "type": "array", "items": { "$ref": "#/components/schemas/Sport" } }
+				},
+				"required": ["id", "username", "roles", "avatarUrl", "status", "sports"]
+			},
+			"ResponseProfileDto": {
+				"allOf": [
+					{ "$ref": "#/components/schemas/ResponseUserDto" },
+					{
+						"type": "object",
+						"properties": {
+							"mail": {
+								"type": "string",
+								"nullable": false,
+								"description": "Địa chỉ email của người dùng. Có thể null cho người sử dụng Google đăng ký"
+							},
+							"phone": {
+								"type": "string",
+								"description": "Số điện thoại của người dùng. Có thể null cho người sử dụng Google đăng ký"
+							},
+							"hasFinishedSetup": {
+								"type": "boolean",
+								"description": "Trạng thái hoàn thành thiết lập ban đầu"
+							},
+							"createdAt": {
+								"type": "string",
+								"format": "date-time",
+								"description": "Ngày giờ tạo hồ sơ"
+							},
+							"updatedAt": {
+								"type": "string",
+								"format": "date-time",
+								"description": "Ngày giờ cập nhật hồ sơ"
+							},
+							"deleted": {
+								"type": "boolean",
+								"description": "Trạng thái đã bị xóa"
+							},
+							"deletedAt": {
+								"type": "string",
+								"nullable": true,
+								"format": "date-time",
+								"description": "Ngày giờ bị xóa, nếu có"
+							},
+							"deletedBy": {
+								"type": "string",
+								"nullable": true,
+								"description": "Người xóa, nếu có"
+							},
+							"deletedByUser": {
+								"type": "object",
+								"description": "Thông tin chi tiết người xóa nếu có",
+								"properties": {
+									"username": {
+										"type": "string"
+									},
+									"avatarUrl": {
+										"type": "string"
+									}
+								}
+							},
+							"googleLoginInfo": {
+								"type": "object",
+								"description": "Thông tin đăng nhập Google",
+								"properties": {
+									"id": {
+										"type": "string",
+										"nullable": true,
+										"description": "ID đăng nhập Google"
+									}
+								}
+							}
+						},
+						"required": [
+							"mail",
+							"phone",
+							"location",
+							"hasFinishedSetup",
+							"createdAt",
+							"updatedAt",
+							"deleted",
+							"deletedAt",
+							"deletedBy",
+							"googleLoginInfo",
+							"deletedByUser"
+						]
+					}
+				]
+			},
+			"CreatePostDto": {
+				"type": "object",
+				"properties": {
+					"title": {
+						"type": "string",
+						"description": "Tiêu đề bài viết",
+						"example": "Chuyến đi Đà Lạt"
+					},
+					"content": {
+						"type": "string",
+						"description": "Nội dung bài viết",
+						"example": "Đây là một chuyến đi rất thú vị!"
+					},
+					"visibility": {
+						"$ref": "#/components/schemas/Visibility",
+						"description": "Quyền riêng tư của bài viết"
+					},
+					"files": {
+						"type": "array",
+						"description": "Danh sách tệp tin đính kèm (ảnh hoặc video). Nếu `eventId` được chỉ định, trường này sẽ bị loại bỏ.",
+						"items": {
+							"type": "string",
+							"format": "binary"
+						}
+					},
+					"eventId": {
+						"type": "string",
+						"description": "ID sự kiện nếu bài viết thuộc về một sự kiện",
+						"example": "64a1b2c3d4e5f67890123456"
+					},
+					"postType": {
+						"type": "string",
+						"description": "Loại bài viết: sự kiện hoặc chia sẻ tệp. Tự động xác định từ `eventId`.",
+						"enum": ["EVENT", "FILES"],
+						"example": "FILES"
+					},
+					"visibleToCommunityId": {
+						"type": "string",
+						"description": "ID cộng đồng được hiển thị (chỉ khi visibility là `limited`)",
+						"example": "64a1b2c3d4e5f67890123456"
+					},
+					"visibleToUsersIds": {
+						"type": "array",
+						"description": "Danh sách ID người dùng được hiển thị (chỉ khi visibility là `limited`)",
+						"items": {
+							"type": "string"
+						},
+						"example": ["64a1b2c3d4e5f67890123456", "64a1b2c3d4e5f67890123457"]
+					},
+					"invisibleToUsersIds": {
+						"type": "array",
+						"description": "Danh sách ID người dùng bị ẩn bài viết (chỉ khi visibility là `limited`)",
+						"items": {
+							"type": "string"
+						},
+						"example": ["64a1b2c3d4e5f67890123458", "64a1b2c3d4e5f67890123459"]
+					}
+				},
+				"required": ["title", "content", "visibility"]
+			},
+			"UpdatePostDto": {
+				"type": "object",
+				"properties": {
+					"title": {
+						"type": "string",
+						"description": "Tiêu đề bài viết",
+						"example": "Chuyến đi Đà Lạt"
+					},
+					"content": {
+						"type": "string",
+						"description": "Nội dung bài viết",
+						"example": "Đây là một chuyến đi rất thú vị!"
+					},
+					"visibility": {
+						"$ref": "#/components/schemas/Visibility",
+						"description": "Quyền riêng tư của bài viết"
+					},
+					"files": {
+						"type": "array",
+						"description": "Danh sách tệp tin đính kèm (ảnh hoặc video). Nếu `eventId` được chỉ định, trường này sẽ bị loại bỏ.",
+						"items": {
+							"type": "string",
+							"format": "binary"
+						}
+					},
+					"eventId": {
+						"type": "string",
+						"description": "ID sự kiện nếu bài viết thuộc về một sự kiện",
+						"example": "64a1b2c3d4e5f67890123456"
+					},
+					"postType": {
+						"type": "string",
+						"description": "Loại bài viết: sự kiện hoặc chia sẻ tệp. Tự động xác định từ `eventId`.",
+						"enum": ["EVENT", "FILES"],
+						"example": "FILES"
+					},
+					"visibleToCommunityId": {
+						"type": "string",
+						"description": "ID cộng đồng được hiển thị (chỉ khi visibility là `limited`)",
+						"example": "64a1b2c3d4e5f67890123456"
+					},
+					"visibleToUsersIds": {
+						"type": "array",
+						"description": "Danh sách ID người dùng được hiển thị (chỉ khi visibility là `limited`)",
+						"items": {
+							"type": "string"
+						},
+						"example": ["64a1b2c3d4e5f67890123456", "64a1b2c3d4e5f67890123457"]
+					},
+					"invisibleToUsersIds": {
+						"type": "array",
+						"description": "Danh sách ID người dùng bị ẩn bài viết (chỉ khi visibility là `limited`)",
+						"items": {
+							"type": "string"
+						},
+						"example": ["64a1b2c3d4e5f67890123458", "64a1b2c3d4e5f67890123459"]
+					}
+				}
+			},
+			"FeedPostDto": {
+				"type": "object",
+				"properties": {
+					"cursor": {
+						"type": "string",
+						"description": "ID của bài viết cuối cùng được tải về để phân trang (cursor-based)",
+						"example": "64a1b2c3d4e5f67890123456"
+					},
+					"limit": {
+						"type": "integer",
+						"description": "Số lượng bài viết tối đa trả về",
+						"default": 10,
+						"minimum": 1,
+						"example": 20
+					}
+				}
+			},
+			"ResponsePostDto": {
+				"type": "object",
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "ID của bài viết",
+						"example": "64a1b2c3d4e5f67890123456"
+					},
+					"visibility": {
+						"$ref": "#/components/schemas/Visibility",
+						"description": "Quyền riêng tư của bài viết"
+					},
+					"title": {
+						"type": "string",
+						"description": "Tiêu đề bài viết",
+						"example": "Chuyến đi Sa Pa"
+					},
+					"content": {
+						"type": "string",
+						"description": "Nội dung bài viết",
+						"example": "Khám phá núi Fansipan cùng nhóm bạn"
+					},
+					"fileUrls": {
+						"type": "array",
+						"description": "Danh sách đường dẫn tới tệp tin đính kèm",
+						"items": {
+							"type": "string",
+							"format": "uri"
+						},
+						"nullable": true
+					},
+					"userId": {
+						"type": "string",
+						"description": "ID của người tạo bài viết"
+					},
+					"creator": {
+						"type": "object",
+						"nullable": true,
+						"description": "Thông tin người tạo bài viết (được populate)",
+						"properties": {
+							"username": {
+								"type": "string",
+								"example": "nguyenvana"
+							},
+							"avatarUrl": {
+								"type": "string",
+								"format": "uri",
+								"example": "https://example.com/avatar.jpg"
+							}
+						}
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time",
+						"description": "Thời điểm tạo bài viết"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time",
+						"description": "Thời điểm cập nhật bài viết"
+					},
+					"deleted": {
+						"type": "boolean",
+						"description": "Trạng thái đã bị xóa hay chưa"
+					},
+					"deletedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true,
+						"description": "Thời điểm bài viết bị xóa (nếu có)"
+					},
+					"deletedBy": {
+						"type": "string",
+						"nullable": true,
+						"description": "ID người đã xóa bài viết (nếu có)"
+					},
+					"deletedByUser": {
+						"type": "object",
+						"nullable": true,
+						"description": "Thông tin người đã xóa bài viết (nếu có)",
+						"properties": {
+							"username": {
+								"type": "string",
+								"example": "adminuser"
+							},
+							"avatarUrl": {
+								"type": "string",
+								"format": "uri",
+								"example": "https://example.com/avatar-admin.jpg"
+							}
+						}
+					},
+					"visibleToCommunityId": {
+						"type": "string",
+						"nullable": true,
+						"description": "ID của cộng đồng được hiển thị bài viết (nếu có)"
+					},
+					"visibleToUsersIds": {
+						"type": "array",
+						"description": "Danh sách ID người dùng được phép xem",
+						"items": {
+							"type": "string"
+						}
+					},
+					"invisibleToUsersIds": {
+						"type": "array",
+						"description": "Danh sách ID người dùng bị ẩn bài viết",
+						"items": {
+							"type": "string"
+						}
+					}
+				},
+				"required": [
+					"id",
+					"visibility",
+					"title",
+					"content",
+					"userId",
+					"createdAt",
+					"updatedAt",
+					"deleted",
+					"visibleToUsersIds",
+					"invisibleToUsersIds",
+					"deletedByUser"
+				]
+			},
+			"Visibility": {
+				"type": "string",
+				"enum": ["public", "private", "limited", "friends"]
+			},
+			"Role": {
+				"type": "string",
+				"enum": ["user", "admin", "moderator"],
+				"description": "Enum các quyền của người dùng"
+			},
+			"Level": {
+				"type": "string",
+				"enum": ["rookie", "recreational", "intermediate", "advanced", "competitive"],
+				"description": "Enum cho mức độ các môn thể thao"
+			},
+			"Status": {
+				"type": "string",
+				"description": "Trạng thái hiện tại của người dùng",
+				"enum": ["online", "offline", "dnd"]
+			},
+			"LocationDto": {
+				"type": "object",
+				"properties": {
+					"province": {
+						"description": "Tỉnh/thành phố",
+						"type": "string"
+					},
+					"city": {
+						"description": "Thành phố/quận/huyện",
+						"type": "string"
+					},
+					"hidden": {
+						"description": "Cài đặt của người dùng có hiển thị vị trí của mình cho người khác không",
+						"type": "boolean"
+					}
+				},
+				"required": ["province", "city", "hidden"],
+				"additionalProperties": false
+			},
+			"SportDto": {
+				"description": "Danh sách các môn thể thao và mức độ của người chơi",
+				"type": "object",
+				"properties": {
+					"name": {
+						"type": "string",
+						"description": "Tên môn thể thao"
+					},
+					"level": {
+						"$ref": "#/components/schemas/Level"
+					}
+				},
+				"required": ["name", "level"],
+				"additionalProperties": false
+			},
+			"Location": {
+				"type": "object",
+				"properties": {
+					"province": {
+						"description": "Tỉnh/thảnh phố. Chỉ có giá trị null cho lần đăng ký",
+						"type": "string",
+						"nullable": true,
+						"example": "Đồng Nai"
+					},
+					"city": {
+						"description": "Thành phố/quận/huyện. Chỉ có giá trị null cho lần đăng ký",
+						"type": "string",
+						"nullable": true,
+						"example": "Biên Hòa"
+					},
+					"hidden": {
+						"description": "Cài đặt của người dùng có hiển thị vị trí của mình cho người khác không",
+						"type": "boolean"
+					}
+				},
+				"required": ["province", "city", "hidden"],
+				"additionalProperties": false
+			},
+			"Sport": {
+				"description": "Danh sách các môn thể thao và mức độ của người chơi",
+				"type": "object",
+				"properties": {
+					"name": {
+						"type": "string",
+						"description": "Tên môn thể thao",
+						"example": "Bóng đá"
+					},
+					"level": {
+						"$ref": "#/components/schemas/Level"
+					}
+				},
+				"required": ["name", "level"],
+				"additionalProperties": false
+			},
+			"GoogleLoginInfo": {
+				"type": "object",
+				"description": "Thông tin của người dùng đăng nhập bằng Google",
+				"properties": {
+					"id": {
+						"type": "string",
+						"nullable": true,
+						"description": "ID đăng nhập Google",
+						"example": "012345678901234567890"
+					}
+				}
+			}
+		}
+	}
+}
