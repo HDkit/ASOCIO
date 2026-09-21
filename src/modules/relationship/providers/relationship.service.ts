@@ -1,10 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 import { Populated } from '@common/crud/entities';
 import { OffsetPaginationOption } from '@common/types/data';
 
-import { NotificationType } from '@modules/notification/enums';
-import { NotificationService } from '@modules/notification/providers';
+import { NotificationEvents, emitNotificationEvent } from '@modules/notification/events';
 
 import { Block, FriendStatus, Friendship } from '../entities';
 import { RelationshipType } from '../enums';
@@ -22,7 +22,7 @@ export class RelationshipService {
 		@Inject(IFriendshipRepositoryToken)
 		private readonly friendshipRepository: IFriendshipRepository,
 		@Inject(IBlockRepositoryToken) private readonly blockRepository: IBlockRepository,
-		private readonly notificationService: NotificationService,
+		private readonly eventEmitter: EventEmitter2,
 	) {}
 
 	async getRelationship(userId: [string, string]): Promise<RelationshipType> {
@@ -43,10 +43,9 @@ export class RelationshipService {
 				requestedFrom: actor,
 				status: FriendStatus.PENDING,
 			});
-			await this.notificationService.createAndSendNotification(
-				NotificationType.FRIEND_REQUEST,
-				createdRequest,
-			);
+			await emitNotificationEvent(this.eventEmitter, NotificationEvents.FRIEND_REQUEST, {
+				friendship: createdRequest,
+			});
 			return createdRequest;
 		}
 		return foundRequest;
@@ -66,10 +65,9 @@ export class RelationshipService {
 
 	async acceptFriendRequest(actor: string, requestId: string): Promise<Populated<Friendship>> {
 		const acceptedRequest = await this.friendshipRepository.acceptFriendRequest(actor, requestId);
-		await this.notificationService.createAndSendNotification(
-			NotificationType.FRIEND_ACCEPTED,
-			acceptedRequest,
-		);
+		await emitNotificationEvent(this.eventEmitter, NotificationEvents.FRIEND_ACCEPTED, {
+			friendship: acceptedRequest,
+		});
 		return acceptedRequest;
 	}
 

@@ -1,11 +1,11 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { MemoryStoredFile } from 'nestjs-form-data';
 
 import { CreateType, Populated } from '@common/crud/entities';
 import { CursorPaginationOption } from '@common/types/data';
 
-import { NotificationType } from '@modules/notification/enums';
-import { NotificationService } from '@modules/notification/providers';
+import { NotificationEvents, emitNotificationEvent } from '@modules/notification/events';
 
 import { FileHostService, ISessionServiceToken, MongooseSessionService } from '@shared/modules';
 
@@ -40,7 +40,7 @@ export class EventService {
 		@Inject(IEventRepositoryToken) private readonly eventRepository: IEventRepository,
 		@Inject(ISessionServiceToken) private readonly sessionService: MongooseSessionService,
 		private readonly fileHostService: FileHostService,
-		private readonly notifcationService: NotificationService,
+		private readonly eventEmitter: EventEmitter2,
 	) {}
 
 	async createEvent(
@@ -101,12 +101,11 @@ export class EventService {
 
 	async inviteUsersToEvent(eventId: string, fromUserId: string, toUserIds: string[]) {
 		const foundEvent = await this.eventRepository.findOneByIdOrFail(eventId);
-		await this.notifcationService.createAndSendNotification(
-			NotificationType.EVENT_INVITE,
-			foundEvent,
+		await emitNotificationEvent(this.eventEmitter, NotificationEvents.EVENT_INVITE, {
+			event: foundEvent,
 			fromUserId,
 			toUserIds,
-		);
+		});
 	}
 
 	joinEvent(eventId: string, userId: string): Promise<Populated<EventParticipant>> {

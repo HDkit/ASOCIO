@@ -1,8 +1,6 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 
-import { NotificationModule } from '@modules/notification';
-
 import { Reaction, ReactionSchema } from './entities';
 import { ReactionService } from './providers';
 import { IReactionRepositoryToken, ReactionRepositoryImpl } from './repositories';
@@ -15,7 +13,6 @@ import { IReactionRepositoryToken, ReactionRepositoryImpl } from './repositories
 				schema: ReactionSchema,
 			},
 		]),
-		NotificationModule,
 	],
 	providers: [
 		ReactionService,

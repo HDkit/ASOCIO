@@ -1,4 +1,5 @@
 import { Inject, Injectable, MessageEvent } from '@nestjs/common';
+import { OnEvent } from '@nestjs/event-emitter';
 import { Observable } from 'rxjs';
 
 import { Populated } from '@common/crud/entities';
@@ -6,17 +7,13 @@ import { SystemEntity } from '@common/enums';
 import { CursorPaginationOption } from '@common/types/data';
 import { plainToInstanceStrict } from '@common/utils';
 
-import { Comment } from '@modules/comment/entities';
-import { Event } from '@modules/event/entities';
-import { Reaction } from '@modules/reaction/entities';
-import { Friendship } from '@modules/relationship/entities';
-
 import { CustomRequestCtx } from '@shared/modules/request-ctx/types';
 import { SseService } from '@shared/modules/sse/providers/sse.service';
 
 import { ResponseNotificationDto } from '../dto';
 import { Notification } from '../entities';
 import { NotificationType } from '../enums';
+import { NotificationEventPayload, NotificationEvents } from '../events';
 import {
 	INotificationRepository,
 	INotificationRepositoryToken,
@@ -30,20 +27,6 @@ export type PaginatedNotificationsWithCursor = {
 	nextCursor: string;
 };
 
-type NotificationCreationMap = {
-	[NotificationType.EVENT_INVITE]: (
-		event: Event,
-		fromUserId: string,
-		toUserIds: string[],
-	) => Promise<Populated<Notification>[]>;
-	[NotificationType.COMMENTED]: (comment: Comment) => Promise<Populated<Notification>[]>;
-	[NotificationType.FRIEND_ACCEPTED]: (
-		friendship: Friendship,
-	) => Promise<Populated<Notification>[]>;
-	[NotificationType.FRIEND_REQUEST]: (friendship: Friendship) => Promise<Populated<Notification>[]>;
-	[NotificationType.REACTED]: (reaction: Reaction) => Promise<Populated<Notification>[]>;
-};
-
 @Injectable()
 export class NotificationService {
 	constructor(
@@ -54,109 +37,7 @@ export class NotificationService {
 		private readonly sseService: SseService,
 	) {}
 
-	private createNotifcationOnEventInvitation = async (
-		event: Event,
-		fromUserId: string,
-		toUserIds: string[],
-	): Promise<Populated<Notification>[]> => {
-		const notifications: NotificationCreateInput[] = toUserIds.map(id => ({
-			actorsIds: [],
-			addActorIds: [fromUserId],
-			actorType: SystemEntity.USER,
-			targetId: event.id,
-			targetType: SystemEntity.EVENT,
-			toUserId: id,
-			isRead: false,
-			notifType: NotificationType.EVENT_INVITE,
-		}));
-		const createdNotifications =
-			await this.notificationRepository.createNotificationBulk(notifications);
-		return createdNotifications;
-	};
-
-	private createNotificationOnComment = async (
-		comment: Comment,
-	): Promise<Populated<Notification>[]> => {
-		const subsciberIds = await this.getSubsscribersOf(comment.targetId);
-		const notifications: NotificationCreateInput[] = subsciberIds
-			.filter(id => id != comment.userId)
-			.map(id => ({
-				actorsIds: [],
-				addActorIds: [comment.userId],
-				actorType: SystemEntity.USER,
-				targetId: comment.targetId,
-				targetType: comment.targetId == comment.rootId ? comment.rootType : SystemEntity.COMMENT,
-				toUserId: id,
-				isRead: false,
-				notifType: NotificationType.COMMENTED,
-			}));
-		const createdNotifications =
-			await this.notificationRepository.createNotificationBulk(notifications);
-		return createdNotifications;
-	};
-
-	private createNotificationOnFriendAcceptance = async (
-		friendship: Friendship,
-	): Promise<Populated<Notification>[]> => {
-		const notification = await this.notificationRepository.createNotification({
-			actorsIds: [],
-			addActorIds: [friendship.requestedFrom],
-			actorType: SystemEntity.USER,
-			targetId: friendship.id,
-			targetType: SystemEntity.FRIEND_REQUEST,
-			toUserId: friendship.requestedFrom,
-			isRead: false,
-			notifType: NotificationType.FRIEND_ACCEPTED,
-		});
-		return [notification];
-	};
-
-	private createNotificationOnFriendRequest = async (
-		friendship: Friendship,
-	): Promise<Populated<Notification>[]> => {
-		const notification = await this.notificationRepository.createNotification({
-			actorsIds: [],
-			addActorIds: [friendship.requestedFrom],
-			actorType: SystemEntity.USER,
-			targetId: friendship.id,
-			targetType: SystemEntity.FRIEND_REQUEST,
-			toUserId: friendship.userIds.find(id => id != friendship.requestedFrom)!,
-			isRead: false,
-			notifType: NotificationType.FRIEND_REQUEST,
-		});
-		return [notification];
-	};
-
-	private createNotificationOnReaction = async (
-		reaction: Reaction,
-	): Promise<Populated<Notification>[]> => {
-		const subsciberIds = await this.getSubsscribersOf(reaction.targetId);
-		const notifications: NotificationCreateInput[] = subsciberIds
-			.filter(id => id != reaction.userId)
-			.map(id => ({
-				actorsIds: [],
-				addActorIds: [reaction.userId],
-				actorType: SystemEntity.USER,
-				targetId: reaction.targetId,
-				targetType: reaction.targetType,
-				toUserId: id,
-				isRead: false,
-				notifType: NotificationType.REACTED,
-			}));
-		const createdNotifications =
-			await this.notificationRepository.createNotificationBulk(notifications);
-		return createdNotifications;
-	};
-
-	private notificationCreationMap: NotificationCreationMap = {
-		[NotificationType.EVENT_INVITE]: this.createNotifcationOnEventInvitation,
-		[NotificationType.COMMENTED]: this.createNotificationOnComment,
-		[NotificationType.FRIEND_ACCEPTED]: this.createNotificationOnFriendAcceptance,
-		[NotificationType.FRIEND_REQUEST]: this.createNotificationOnFriendRequest,
-		[NotificationType.REACTED]: this.createNotificationOnReaction,
-	};
-
-	private userChannel(uid: string) {
+	private userChannel(uid: string): string {
 		return `user.${uid}`;
 	}
 
@@ -165,31 +46,132 @@ export class NotificationService {
 		return this.sseService.subscribe(this.userChannel(uid));
 	}
 
-	/** subscribe user to a topic, saves on DB */
-	async subscribeToTopic(topicId: string): Promise<void> {
+	/** subscribe the current user to a topic so future notifications on it reach them */
+	@OnEvent(NotificationEvents.SUBSCRIBE_TOPIC, { suppressErrors: false })
+	async subscribeToTopic(
+		payload: NotificationEventPayload[typeof NotificationEvents.SUBSCRIBE_TOPIC],
+	): Promise<void> {
 		const uid = CustomRequestCtx.getAuthenticated().req.user.id;
-		await this.notificationSubscriberRepository.create({ subsciberId: uid, topicId });
+		await this.notificationSubscriberRepository.create({
+			subsciberId: uid,
+			topicId: payload.topicId,
+		});
 	}
 
-	alertNotification(data: Populated<Notification>) {
+	@OnEvent(NotificationEvents.EVENT_INVITE, { suppressErrors: false })
+	async createNotificationsOfEventInvitation(
+		payload: NotificationEventPayload[typeof NotificationEvents.EVENT_INVITE],
+	): Promise<Populated<Notification>[]> {
+		return this.alertAll(
+			payload.toUserIds.map(toUserId => ({
+				actorsIds: [],
+				addActorIds: [payload.fromUserId],
+				actorType: SystemEntity.USER,
+				targetId: payload.event.id,
+				targetType: SystemEntity.EVENT,
+				toUserId,
+				isRead: false,
+				notifType: NotificationType.EVENT_INVITE,
+			})),
+		);
+	}
+
+	@OnEvent(NotificationEvents.COMMENTED, { suppressErrors: false })
+	async createNotificationsOfComment(
+		payload: NotificationEventPayload[typeof NotificationEvents.COMMENTED],
+	): Promise<Populated<Notification>[]> {
+		const subscriberIds = await this.getSubscribersOf(payload.comment.targetId);
+		return this.alertAll(
+			subscriberIds
+				.filter(id => id != payload.comment.userId)
+				.map(id => ({
+					actorsIds: [],
+					addActorIds: [payload.comment.userId],
+					actorType: SystemEntity.USER,
+					targetId: payload.comment.targetId,
+					targetType:
+						payload.comment.targetId == payload.comment.rootId ?
+							payload.comment.rootType
+						:	SystemEntity.COMMENT,
+					toUserId: id,
+					isRead: false,
+					notifType: NotificationType.COMMENTED,
+				})),
+		);
+	}
+
+	@OnEvent(NotificationEvents.FRIEND_ACCEPTED, { suppressErrors: false })
+	async createNotificationsOfFriendAcceptance(
+		payload: NotificationEventPayload[typeof NotificationEvents.FRIEND_ACCEPTED],
+	): Promise<Populated<Notification>[]> {
+		return this.alertAll([
+			{
+				actorsIds: [],
+				addActorIds: [payload.friendship.requestedFrom],
+				actorType: SystemEntity.USER,
+				targetId: payload.friendship.id,
+				targetType: SystemEntity.FRIEND_REQUEST,
+				toUserId: payload.friendship.requestedFrom,
+				isRead: false,
+				notifType: NotificationType.FRIEND_ACCEPTED,
+			},
+		]);
+	}
+
+	@OnEvent(NotificationEvents.FRIEND_REQUEST, { suppressErrors: false })
+	async createNotificationsOfFriendRequest(
+		payload: NotificationEventPayload[typeof NotificationEvents.FRIEND_REQUEST],
+	): Promise<Populated<Notification>[]> {
+		return this.alertAll([
+			{
+				actorsIds: [],
+				addActorIds: [payload.friendship.requestedFrom],
+				actorType: SystemEntity.USER,
+				targetId: payload.friendship.id,
+				targetType: SystemEntity.FRIEND_REQUEST,
+				toUserId: payload.friendship.userIds.find(id => id != payload.friendship.requestedFrom)!,
+				isRead: false,
+				notifType: NotificationType.FRIEND_REQUEST,
+			},
+		]);
+	}
+
+	@OnEvent(NotificationEvents.REACTED, { suppressErrors: false })
+	async createNotificationsOfReaction(
+		payload: NotificationEventPayload[typeof NotificationEvents.REACTED],
+	): Promise<Populated<Notification>[]> {
+		const subscriberIds = await this.getSubscribersOf(payload.reaction.targetId);
+		return this.alertAll(
+			subscriberIds
+				.filter(id => id != payload.reaction.userId)
+				.map(id => ({
+					actorsIds: [],
+					addActorIds: [payload.reaction.userId],
+					actorType: SystemEntity.USER,
+					targetId: payload.reaction.targetId,
+					targetType: payload.reaction.targetType,
+					toUserId: id,
+					isRead: false,
+					notifType: NotificationType.REACTED,
+				})),
+		);
+	}
+
+	alertNotification(data: Populated<Notification>): boolean {
 		return this.sseService.sendToUser(
 			this.userChannel(data.toUserId),
 			plainToInstanceStrict(ResponseNotificationDto, data),
 		);
 	}
 
-	private async getSubsscribersOf(topicId: string): Promise<string[]> {
+	private async getSubscribersOf(topicId: string): Promise<string[]> {
 		const foundSubscribers = await this.notificationSubscriberRepository.find({ topicId });
-		const foundSubscribersIds = foundSubscribers.map(subscriber => subscriber.subsciberId);
-		return foundSubscribersIds;
+		return foundSubscribers.map(subscriber => subscriber.subsciberId);
 	}
 
-	async createAndSendNotification<T extends NotificationType>(
-		type: T,
-		...values: Parameters<(typeof this.notificationCreationMap)[T]>
-	): Promise<Populated<Notification>[]> {
-		//@ts-expect-error: unexpected error spreading union of tuples
-		const notifications = await this.notificationCreationMap[type](...values);
+	private async alertAll(inputs: NotificationCreateInput[]): Promise<Populated<Notification>[]> {
+		if (inputs.length === 0) return [];
+		const notifications = await this.notificationRepository.createNotificationBulk(inputs);
 		notifications.forEach(notification => this.alertNotification(notification));
 		return notifications;
 	}
@@ -201,7 +183,7 @@ export class NotificationService {
 		const foundNotifications =
 			await this.notificationRepository.getPaginatedNotificationsWithCursorOf(userId, options);
 		const nextCursor = foundNotifications.at(-1)?.id || '';
-		return { foundNotifications: foundNotifications, nextCursor };
+		return { foundNotifications, nextCursor };
 	}
 
 	async readNotification(notificationId: string): Promise<Populated<Notification>> {

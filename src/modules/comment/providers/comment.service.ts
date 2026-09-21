@@ -1,12 +1,12 @@
 import { ForbiddenException, Inject, Injectable } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { MemoryStoredFile } from 'nestjs-form-data';
 
 import { CreateType, Populated } from '@common/crud/entities';
 import { Action } from '@common/enums';
 import { CursorPaginationOption } from '@common/types/data';
 
-import { NotificationType } from '@modules/notification/enums';
-import { NotificationService } from '@modules/notification/providers';
+import { NotificationEvents, emitNotificationEvent } from '@modules/notification/events';
 import { ReactionService } from '@modules/reaction/providers';
 import { ReactionCount } from '@modules/reaction/repositories';
 
@@ -36,7 +36,7 @@ export class CommentService {
 		@Inject(ISessionServiceToken) private readonly sessionService: ISessionService<any>,
 		private readonly fileHostService: FileHostService,
 		private readonly caslFilterFactory: CaslFilterFactory,
-		private readonly notificationService: NotificationService,
+		private readonly eventEmitter: EventEmitter2,
 	) {}
 
 	async checkAccessTo(
@@ -56,11 +56,12 @@ export class CommentService {
 	): Promise<Populated<Comment>> {
 		if (data.files) data.fileUrls = await this.fileHostService.files2Urls(data.files);
 		const createdComment = await this.commentRepository.create(data);
-		await this.notificationService.subscribeToTopic(createdComment.id);
-		await this.notificationService.createAndSendNotification(
-			NotificationType.COMMENTED,
-			createdComment,
-		);
+		await emitNotificationEvent(this.eventEmitter, NotificationEvents.SUBSCRIBE_TOPIC, {
+			topicId: createdComment.id,
+		});
+		await emitNotificationEvent(this.eventEmitter, NotificationEvents.COMMENTED, {
+			comment: createdComment,
+		});
 		return createdComment;
 	}
 

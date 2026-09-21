@@ -1,11 +1,12 @@
 import { ForbiddenException, Inject, Injectable } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { MemoryStoredFile } from 'nestjs-form-data';
 
 import { CreateType, Populated } from '@common/crud/entities';
 import { Action } from '@common/enums';
 import { CursorPaginationOption } from '@common/types/data';
 
-import { NotificationService } from '@modules/notification/providers';
+import { NotificationEvents, emitNotificationEvent } from '@modules/notification/events';
 
 import { CaslFilterFactory, FileHostService, UserAbilityOptions } from '@shared/modules';
 
@@ -19,7 +20,7 @@ export class PostService {
 		@Inject(IPostRepositoryToken) private readonly postRepository: IPostRepository,
 		private readonly fileHostService: FileHostService,
 		private readonly caslFilterFactory: CaslFilterFactory,
-		private readonly notificationService: NotificationService,
+		private readonly eventEmitter: EventEmitter2,
 	) {}
 
 	async checkAccessTo(
@@ -39,7 +40,9 @@ export class PostService {
 	): Promise<Populated<SocialPost>> {
 		if (data.files) data.fileUrls = await this.fileHostService.files2Urls(data.files);
 		const createdPost = await this.postRepository.create(data);
-		await this.notificationService.subscribeToTopic(createdPost.id);
+		await emitNotificationEvent(this.eventEmitter, NotificationEvents.SUBSCRIBE_TOPIC, {
+			topicId: createdPost.id,
+		});
 		return createdPost;
 	}
 

@@ -3,7 +3,6 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { NestjsFormDataModule } from 'nestjs-form-data';
 
 import { CommentModule } from '@modules/comment';
-import { NotificationModule } from '@modules/notification';
 import { ReactionModule } from '@modules/reaction';
 
 import { CaslModule, FileHostModule } from '@shared/modules';
@@ -26,7 +25,6 @@ import { IPostRepositoryToken, PostRepositoryImpl } from './repositories';
 		CommentModule,
 		ReactionModule,
 		CaslModule,
-		NotificationModule,
 	],
 	controllers: [PostController, PostReactionController, PostCommentController],
 	providers: [

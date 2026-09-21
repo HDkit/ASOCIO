@@ -1,10 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 import { Populated } from '@common/crud/entities';
 import { CursorPaginationOption } from '@common/types/data';
 
-import { NotificationType } from '@modules/notification/enums';
-import { NotificationService } from '@modules/notification/providers';
+import { NotificationEvents, emitNotificationEvent } from '@modules/notification/events';
 
 import { Reaction } from '../entities';
 import { IReactionRepository, IReactionRepositoryToken, ReactionCount } from '../repositories';
@@ -18,7 +18,7 @@ export type PaginatedReactionUsersListWithCursor = {
 export class ReactionService {
 	constructor(
 		@Inject(IReactionRepositoryToken) private readonly reactionRepository: IReactionRepository,
-		private readonly notifcationService: NotificationService,
+		private readonly eventEmitter: EventEmitter2,
 	) {}
 
 	async upsertReaction(
@@ -26,7 +26,7 @@ export class ReactionService {
 		value: number,
 	): Promise<Populated<Reaction>> {
 		const reaction = await this.reactionRepository.upsert(options, { reactionValue: value });
-		await this.notifcationService.createAndSendNotification(NotificationType.REACTED, reaction);
+		await emitNotificationEvent(this.eventEmitter, NotificationEvents.REACTED, { reaction });
 		return reaction;
 	}
 
